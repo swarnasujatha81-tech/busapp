@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import type { Bus, BusType, CrowdLevel, Stop } from '@/types';
@@ -30,6 +29,37 @@ const tileTemplates = {
 
 const MAX_VISIBLE_STOPS = 70;
 const STOP_VISIBILITY_DELTA = 0.32;
+type BusMarkerZoom = 'sm' | 'md' | 'lg';
+
+const busMarkerImages: Record<BusMarkerZoom, Record<BusType, number>> = {
+  sm: {
+    ordinary: require('../../assets/markers/bus-ordinary-sm.png'),
+    metro_express: require('../../assets/markers/bus-metro-express-sm.png'),
+    metro_deluxe: require('../../assets/markers/bus-metro-deluxe-sm.png'),
+    ac_bus: require('../../assets/markers/bus-ac-sm.png'),
+    electric: require('../../assets/markers/bus-electric-sm.png')
+  },
+  md: {
+    ordinary: require('../../assets/markers/bus-ordinary-md.png'),
+    metro_express: require('../../assets/markers/bus-metro-express-md.png'),
+    metro_deluxe: require('../../assets/markers/bus-metro-deluxe-md.png'),
+    ac_bus: require('../../assets/markers/bus-ac-md.png'),
+    electric: require('../../assets/markers/bus-electric-md.png')
+  },
+  lg: {
+    ordinary: require('../../assets/markers/bus-ordinary-lg.png'),
+    metro_express: require('../../assets/markers/bus-metro-express-lg.png'),
+    metro_deluxe: require('../../assets/markers/bus-metro-deluxe-lg.png'),
+    ac_bus: require('../../assets/markers/bus-ac-lg.png'),
+    electric: require('../../assets/markers/bus-electric-lg.png')
+  }
+};
+
+function busMarkerZoom(latitudeDelta: number): BusMarkerZoom {
+  if (latitudeDelta <= 0.08) return 'lg';
+  if (latitudeDelta <= 0.22) return 'md';
+  return 'sm';
+}
 
 export function MapArea({
   buses,
@@ -50,7 +80,6 @@ export function MapArea({
   );
   const mapRef = useRef<any>(null);
   const [stopMarkersReady, setStopMarkersReady] = useState(true);
-  const [busMarkersReady, setBusMarkersReady] = useState(true);
   const [visibleRegion, setVisibleRegion] = useState<{
     latitude: number;
     longitude: number;
@@ -63,12 +92,6 @@ export function MapArea({
     const timer = setTimeout(() => setStopMarkersReady(false), 1800);
     return () => clearTimeout(timer);
   }, [visibleRegion?.latitude, visibleRegion?.longitude, visibleRegion?.latitudeDelta, visibleRegion?.longitudeDelta]);
-
-  useEffect(() => {
-    setBusMarkersReady(true);
-    const timer = setTimeout(() => setBusMarkersReady(false), 1800);
-    return () => clearTimeout(timer);
-  }, [visibleBuses.length, visibleBuses.map((bus) => `${bus.id}:${bus.latitude}:${bus.longitude}:${bus.bus_type}`).join('|')]);
 
   useEffect(() => {
     if (!userLocation || !mapRef.current) return;
@@ -110,6 +133,7 @@ export function MapArea({
 
     const usesCustomTiles = mapTheme !== 'satellite';
     const currentRegion = visibleRegion || region;
+    const markerZoom = busMarkerZoom(currentRegion.latitudeDelta);
     const shouldShowStops =
       currentRegion.latitudeDelta <= STOP_VISIBILITY_DELTA &&
       currentRegion.longitudeDelta <= STOP_VISIBILITY_DELTA;
@@ -172,12 +196,10 @@ export function MapArea({
             description={`${bus.passenger_count} passengers - ${bus.speed || 0} km/h`}
             onPress={() => onSelectBus(bus)}
             onCalloutPress={() => onLongPressBus?.(bus)}
-            anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges
+            anchor={{ x: 0.5, y: 0.82 }}
+            image={busMarkerImages[markerZoom][bus.bus_type] || busMarkerImages[markerZoom].ordinary}
             zIndex={20}
-          >
-            <BusMarker passengerCount={bus.passenger_count || 0} crowdLevel={bus.crowd_level} busType={bus.bus_type} />
-          </Marker>
+          />
         ))}
         {routeCoordinates.length ? <Polyline coordinates={routeCoordinates} strokeColor={colors.cyan} strokeWidth={5} /> : null}
       </MapView>
@@ -213,37 +235,8 @@ const PremiumStopMarker = memo(function PremiumStopMarker() {
   );
 });
 
-const BusMarker = memo(function BusMarker({ passengerCount, crowdLevel, busType }: { passengerCount: number; crowdLevel: CrowdLevel; busType: BusType }) {
-  const paint = busTypePaint(busType);
-  return (
-    <View collapsable={false} style={styles.busMarker}>
-      <View style={[styles.busBody, { backgroundColor: paint.body, borderColor: paint.border }]}>
-        <View style={[styles.busTop, { backgroundColor: paint.top }]} />
-        <Ionicons name="bus" size={20} color={colors.text} />
-        <View style={styles.busGlass} />
-        <Text style={styles.busMarkerCount}>{passengerCount}</Text>
-      </View>
-      <View style={[styles.busDot, { backgroundColor: crowdMeta[crowdLevel].color }]} />
-    </View>
-  );
-});
-
-function busTypePaint(type: BusType) {
-  if (type === 'metro_express') return { body: '#2563eb', top: '#60a5fa', border: '#bfdbfe' };
-  if (type === 'electric') return { body: '#16a34a', top: '#4ade80', border: '#bbf7d0' };
-  if (type === 'ac_bus') return { body: '#b8860b', top: '#facc15', border: '#fef3c7' };
-  if (type === 'metro_deluxe') return { body: '#14532d', top: '#22c55e', border: '#86efac' };
-  return { body: '#dc2626', top: '#ef4444', border: '#fecaca' };
-}
-
 const styles = StyleSheet.create({
   map: { flex: 1 },
-  busMarker: { width: 36, height: 42, alignItems: 'center', justifyContent: 'flex-start', overflow: 'hidden', backgroundColor: 'transparent' },
-  busMarkerCount: { position: 'absolute', right: 1, top: 1, color: colors.text, backgroundColor: '#0f172a', borderRadius: 5, overflow: 'hidden', paddingHorizontal: 4, paddingVertical: 1, fontSize: 8, fontWeight: '900', borderWidth: 1, borderColor: '#334155' },
-  busBody: { width: 32, height: 32, borderRadius: 8, borderWidth: 2, alignItems: 'center', justifyContent: 'center', elevation: 6 },
-  busTop: { position: 'absolute', top: 0, left: 5, right: 5, height: 7, borderTopLeftRadius: 7, borderTopRightRadius: 7 },
-  busGlass: { position: 'absolute', top: 9, left: 8, right: 8, height: 4, borderRadius: 2, backgroundColor: 'rgba(219,234,254,0.75)' },
-  busDot: { width: 8, height: 8, borderRadius: 999, borderWidth: 2, borderColor: colors.text, marginTop: 1 },
   stopMarkerBox: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   stopPulse: { position: 'absolute', width: 30, height: 30, borderRadius: 999, backgroundColor: 'rgba(248,113,113,0.45)' },
   stopCore: { width: 19, height: 19, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: '#ef4444', borderWidth: 2, borderColor: '#fecaca', shadowColor: '#ef4444', shadowOpacity: 0.55, shadowRadius: 10, shadowOffset: { width: 0, height: 0 }, elevation: 9 },

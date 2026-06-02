@@ -200,7 +200,7 @@ export default function DriverScreen() {
       if (gpsIntervalRef.current) clearInterval(gpsIntervalRef.current);
       gpsIntervalRef.current = setInterval(() => {
         takeAndPublishGps().catch(() => {});
-      }, 5000);
+      }, 10000);
     } finally {
       setStartingGps(false);
     }

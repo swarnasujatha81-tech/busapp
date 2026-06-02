@@ -59,7 +59,11 @@ export default function HomeScreen() {
     Speech.speak('Welcome to TSRTC LiveTrack. Track your bus in real time.', { language });
   }, [language]);
 
-  const activeBuses = useMemo(() => buses.filter((bus) => bus.is_active), [buses]);
+  const activeBuses = useMemo(() => {
+    const staleAfterMs = 8 * 60 * 1000;
+    const now = Date.now();
+    return buses.filter((bus) => bus.is_active && (!bus.updated_at || now - bus.updated_at <= staleAfterMs));
+  }, [buses]);
   const stop = useMemo(() => nearestStop(userLocation, hydStops), [userLocation]);
   const filteredBuses = useMemo(
     () => (crowdFilter === 'all' ? activeBuses : activeBuses.filter((bus) => bus.crowd_level === crowdFilter)),

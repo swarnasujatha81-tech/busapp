@@ -78,6 +78,7 @@ export function MapArea({
     () => (crowdFilter === 'all' ? buses : buses.filter((bus) => bus.crowd_level === crowdFilter)),
     [buses, crowdFilter]
   );
+  const [displayPositions, setDisplayPositions] = useState<Record<string, { latitude: number; longitude: number }>>({});
   const mapRef = useRef<any>(null);
   const [stopMarkersReady, setStopMarkersReady] = useState(true);
   const [visibleRegion, setVisibleRegion] = useState<{
@@ -92,6 +93,44 @@ export function MapArea({
     const timer = setTimeout(() => setStopMarkersReady(false), 1800);
     return () => clearTimeout(timer);
   }, [visibleRegion?.latitude, visibleRegion?.longitude, visibleRegion?.latitudeDelta, visibleRegion?.longitudeDelta]);
+
+  useEffect(() => {
+    const targets = visibleBuses.filter((bus) => bus.latitude != null && bus.longitude != null);
+    if (!targets.length) {
+      setDisplayPositions({});
+      return;
+    }
+
+    const startPositions: Record<string, { latitude: number; longitude: number }> = {};
+    const targetPositions: Record<string, { latitude: number; longitude: number }> = {};
+    targets.forEach((bus) => {
+      const target = { latitude: bus.latitude!, longitude: bus.longitude! };
+      startPositions[bus.id] = displayPositions[bus.id] || target;
+      targetPositions[bus.id] = target;
+    });
+
+    let frame = 0;
+    const totalFrames = 20;
+    const timer = setInterval(() => {
+      frame += 1;
+      const t = Math.min(1, frame / totalFrames);
+      const eased = 1 - (1 - t) * (1 - t);
+      setDisplayPositions(() => {
+        const next: Record<string, { latitude: number; longitude: number }> = {};
+        Object.entries(targetPositions).forEach(([id, target]) => {
+          const start = startPositions[id] || target;
+          next[id] = {
+            latitude: start.latitude + (target.latitude - start.latitude) * eased,
+            longitude: start.longitude + (target.longitude - start.longitude) * eased
+          };
+        });
+        return next;
+      });
+      if (frame >= totalFrames) clearInterval(timer);
+    }, 500);
+
+    return () => clearInterval(timer);
+  }, [visibleBuses.map((bus) => `${bus.id}:${bus.latitude}:${bus.longitude}:${bus.updated_at}`).join('|')]);
 
   useEffect(() => {
     if (!userLocation || !mapRef.current) return;
@@ -188,10 +227,12 @@ export function MapArea({
             </View>
           </Marker>
         ) : null}
-        {visibleBuses.filter((b) => b.latitude != null && b.longitude != null).map((bus) => (
+        {visibleBuses.filter((b) => b.latitude != null && b.longitude != null).map((bus) => {
+          const displayPosition = displayPositions[bus.id] || { latitude: bus.latitude!, longitude: bus.longitude! };
+          return (
           <Marker
             key={bus.id}
-            coordinate={{ latitude: bus.latitude!, longitude: bus.longitude! }}
+            coordinate={displayPosition}
             title={`${bus.bus_number} - ${bus.route_name}`}
             description={`${bus.passenger_count} passengers - ${bus.speed || 0} km/h`}
             onPress={() => onSelectBus(bus)}
@@ -200,7 +241,7 @@ export function MapArea({
             image={busMarkerImages[markerZoom][bus.bus_type] || busMarkerImages[markerZoom].ordinary}
             zIndex={20}
           />
-        ))}
+        );})}
         {routeCoordinates.length ? <Polyline coordinates={routeCoordinates} strokeColor={colors.cyan} strokeWidth={5} /> : null}
       </MapView>
     );

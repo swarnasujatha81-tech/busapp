@@ -62,7 +62,19 @@ export default function HomeScreen() {
   const activeBuses = useMemo(() => {
     const staleAfterMs = 8 * 60 * 1000;
     const now = Date.now();
-    return buses.filter((bus) => bus.is_active && (!bus.updated_at || now - bus.updated_at <= staleAfterMs));
+    return buses.filter((bus) => (
+      bus.is_active &&
+      bus.live_source === 'driver_app' &&
+      Boolean(bus.live_session_id) &&
+      /^\d{4}$/.test(bus.bus_number) &&
+      bus.latitude != null &&
+      bus.longitude != null &&
+      bus.latitude >= 16.9 &&
+      bus.latitude <= 17.8 &&
+      bus.longitude >= 78.0 &&
+      bus.longitude <= 79.0 &&
+      (!bus.updated_at || now - bus.updated_at <= staleAfterMs)
+    ));
   }, [buses]);
   const stop = useMemo(() => nearestStop(userLocation, hydStops), [userLocation]);
   const filteredBuses = useMemo(

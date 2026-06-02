@@ -60,3 +60,10 @@ export async function updateBus(id: string, patch: Partial<Bus>) {
 export async function deleteBus(id: string) {
   await remove(ref(db, `buses/${id}`));
 }
+
+export async function deleteBusesByNumber(busNumber: string, exceptId?: string) {
+  const snapshot = await get(busesRef);
+  const buses = mapRecord<Bus>(snapshot.val());
+  const matches = buses.filter((bus) => bus.bus_number === busNumber && bus.id !== exceptId);
+  await Promise.all(matches.map((bus) => deleteBus(bus.id)));
+}

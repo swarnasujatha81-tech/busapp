@@ -9,7 +9,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Screen } from '@/components/Screen';
 import { routeList } from '@/data/routes';
-import { createBus, deleteBus, updateBus } from '@/services/firebase';
+import { createBus, deleteBus, deleteBusesByNumber, updateBus } from '@/services/firebase';
 import { analyzeCrowdImage } from '@/services/localAi';
 import { colors, crowdFromCount, crowdMeta } from '@/theme';
 import type { CrowdLevel, DriverProfile } from '@/types';
@@ -119,6 +119,7 @@ export default function DriverScreen() {
       passenger_count: passengerCount,
       max_capacity: 50,
       is_active: false,
+      live_source: 'driver_app',
       speed: 0,
       heading: 0
     });
@@ -140,7 +141,7 @@ export default function DriverScreen() {
   };
 
   const startGps = async () => {
-    if (!profile?.busId) return;
+    if (!profile) return;
     setStartingGps(true);
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
@@ -157,10 +158,39 @@ export default function DriverScreen() {
       setSpeed(0);
       distanceKmRef.current = 0;
       lastPointRef.current = null;
-      const nextProfile = { ...profile, routeName, busType };
+      let activeBusId = profile.busId;
+      const liveSessionId = `${profile.busNumber}-${Date.now()}`;
+      if (!activeBusId) {
+        const bus = await createBus({
+          bus_number: profile.busNumber,
+          route_name: routeName,
+          driver_name: profile.driverName,
+          phone_number: profile.phoneNumber,
+          bus_type: busType,
+          crowd_level: crowdLevel,
+          passenger_count: passengerCount,
+          max_capacity: 50,
+          is_active: false,
+          live_source: 'driver_app',
+          live_session_id: liveSessionId,
+          speed: 0,
+          heading: 0
+        });
+        activeBusId = bus.id;
+      }
+      await deleteBusesByNumber(profile.busNumber, activeBusId);
+      const nextProfile = { ...profile, busId: activeBusId, routeName, busType };
       setProfile(nextProfile);
       await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(nextProfile));
-      await updateBus(profile.busId, { is_active: true, route_name: routeName, bus_type: busType, crowd_level: crowdLevel, passenger_count: passengerCount });
+      await updateBus(activeBusId, {
+        is_active: true,
+        route_name: routeName,
+        bus_type: busType,
+        crowd_level: crowdLevel,
+        passenger_count: passengerCount,
+        live_source: 'driver_app',
+        live_session_id: liveSessionId
+      });
 
       const publishPosition = async (position: Location.LocationObject) => {
         const kmh = position.coords.speed && position.coords.speed > 0 ? Math.round(position.coords.speed * 3.6) : 0;
@@ -168,12 +198,14 @@ export default function DriverScreen() {
         if (lastPointRef.current) distanceKmRef.current += haversineKm(lastPointRef.current, point);
         lastPointRef.current = point;
         setSpeed(kmh);
-        await updateBus(profile.busId!, {
+        await updateBus(activeBusId!, {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           heading: position.coords.heading || 0,
           speed: kmh,
           is_active: true,
+          live_source: 'driver_app',
+          live_session_id: liveSessionId,
           route_name: routeName,
           bus_type: busType,
           crowd_level: crowdLevel,
@@ -213,7 +245,12 @@ export default function DriverScreen() {
     gpsIntervalRef.current = null;
     setTracking(false);
     setStage('route');
-    if (profile?.busId) await updateBus(profile.busId, { is_active: false, speed: 0 });
+    if (profile?.busId) {
+      await deleteBus(profile.busId);
+      const nextProfile = { ...profile, busId: undefined };
+      setProfile(nextProfile);
+      await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(nextProfile));
+    }
   };
 
   const updateCrowd = async (count: number) => {

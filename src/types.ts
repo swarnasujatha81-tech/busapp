@@ -27,6 +27,8 @@ export type Bus = {
   passenger_count: number;
   max_capacity: number;
   is_active: boolean;
+  live_session_id?: string;
+  live_source?: 'driver_app';
   speed: number;
   next_stop?: string;
   heading: number;

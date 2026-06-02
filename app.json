@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Choose It LiveTrack",
+    "slug": "mohanchooseitapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "chooseit",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "jntu.chooseit",
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "CAMERA",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "jntu.chooseit",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Camera is used by drivers to estimate bus crowd levels.",
+        "NSLocationWhenInUseUsageDescription": "Location is used for live bus tracking and nearest stop detection."
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-location",
+      "expo-camera",
+      "expo-notifications"
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
+  }
+}

@@ -22,11 +22,6 @@ if (Platform.OS !== 'web') {
   NativeMap = require('react-native-maps');
 }
 
-const tileTemplates = {
-  standard: 'https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-  terrain: 'https://basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png'
-};
-
 const MAX_VISIBLE_STOPS = 70;
 const STOP_VISIBILITY_DELTA = 0.32;
 type BusMarkerZoom = 'sm' | 'md' | 'lg';
@@ -80,19 +75,12 @@ export function MapArea({
   );
   const [displayPositions, setDisplayPositions] = useState<Record<string, { latitude: number; longitude: number }>>({});
   const mapRef = useRef<any>(null);
-  const [stopMarkersReady, setStopMarkersReady] = useState(true);
   const [visibleRegion, setVisibleRegion] = useState<{
     latitude: number;
     longitude: number;
     latitudeDelta: number;
     longitudeDelta: number;
   } | null>(null);
-
-  useEffect(() => {
-    setStopMarkersReady(true);
-    const timer = setTimeout(() => setStopMarkersReady(false), 1800);
-    return () => clearTimeout(timer);
-  }, [visibleRegion?.latitude, visibleRegion?.longitude, visibleRegion?.latitudeDelta, visibleRegion?.longitudeDelta]);
 
   useEffect(() => {
     const targets = visibleBuses.filter((bus) => bus.latitude != null && bus.longitude != null);
@@ -162,7 +150,6 @@ export function MapArea({
     const MapView = NativeMap.default;
     const Marker = NativeMap.Marker;
     const Polyline = NativeMap.Polyline;
-    const UrlTile = NativeMap.UrlTile;
     const region = {
       latitude: focusCoordinate?.[0] || 17.385,
       longitude: focusCoordinate?.[1] || 78.4867,
@@ -170,7 +157,6 @@ export function MapArea({
       longitudeDelta: 0.14
     };
 
-    const usesCustomTiles = mapTheme !== 'satellite';
     const currentRegion = visibleRegion || region;
     const markerZoom = busMarkerZoom(currentRegion.latitudeDelta);
     const shouldShowStops =
@@ -201,20 +187,12 @@ export function MapArea({
         style={styles.map}
         initialRegion={region}
         showsUserLocation={false}
-        mapType={usesCustomTiles ? 'none' : 'satellite'}
+        mapType={mapTheme}
         moveOnMarkerPress={false}
         onRegionChangeComplete={setVisibleRegion}
       >
-        {mapTheme !== 'satellite' && UrlTile ? (
-          <UrlTile
-            urlTemplate={tileTemplates[mapTheme]}
-            maximumZ={19}
-            flipY={false}
-            tileSize={256}
-          />
-        ) : null}
         {visibleStops.map((stop) => (
-          <Marker key={stop.name} coordinate={stop} title={stop.name} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={stopMarkersReady} zIndex={5}>
+          <Marker key={stop.name} coordinate={stop} title={stop.name} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false} zIndex={5}>
             <PremiumStopMarker />
           </Marker>
         ))}
@@ -282,9 +260,9 @@ const styles = StyleSheet.create({
   stopPulse: { position: 'absolute', width: 30, height: 30, borderRadius: 999, backgroundColor: 'rgba(248,113,113,0.45)' },
   stopCore: { width: 19, height: 19, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: '#ef4444', borderWidth: 2, borderColor: '#fecaca', shadowColor: '#ef4444', shadowOpacity: 0.55, shadowRadius: 10, shadowOffset: { width: 0, height: 0 }, elevation: 9 },
   stopInner: { width: 6, height: 6, borderRadius: 999, backgroundColor: '#7f1d1d' },
-  userMarkerOuter: { width: 34, height: 34, borderRadius: 999, backgroundColor: 'rgba(245,158,11,0.22)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(251,191,36,0.45)' },
-  userMarkerMid: { width: 23, height: 23, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f59e0b', borderWidth: 2, borderColor: '#fff7ed' },
-  userMarkerCore: { width: 8, height: 8, borderRadius: 999, backgroundColor: '#78350f' },
+  userMarkerOuter: { width: 34, height: 34, borderRadius: 999, backgroundColor: 'rgba(59,130,246,0.22)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(147,197,253,0.55)' },
+  userMarkerMid: { width: 23, height: 23, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: '#2563eb', borderWidth: 2, borderColor: '#eff6ff' },
+  userMarkerCore: { width: 8, height: 8, borderRadius: 999, backgroundColor: '#dbeafe' },
   webMap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 18, backgroundColor: '#0b1524' },
   mapTitle: { color: colors.text, fontSize: 24, fontWeight: '900' },
   mapSub: { color: colors.muted, marginTop: 8 },

@@ -1,1 +1,1 @@
-import './node_modules/expo-router/entry-classic';
+import 'expo-router/entry';

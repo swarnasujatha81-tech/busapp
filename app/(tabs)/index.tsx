@@ -256,13 +256,15 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.alertRow}>
-            <Pressable style={styles.alertChip} onPress={runJourneyPlanner}>
-              <Ionicons name="notifications-outline" size={18} color={colors.yellow} />
-              <Text style={styles.alertChipText}>Arrival Alert</Text>
-              <Ionicons name="chevron-down" size={16} color={colors.muted} />
+            <Pressable style={styles.nearestStopButton} onPress={() => router.push('/nearest-stop')}>
+              <Ionicons name="navigate-circle" size={18} color={colors.text} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.nearestStopText}>Nearest Stop</Text>
+                <Text style={styles.nearestStopName} numberOfLines={1}>{stop?.stop.name || 'Tap locate'}</Text>
+              </View>
             </Pressable>
             <Pressable style={styles.alertChip} onPress={() => router.push('/(tabs)/alerts')}>
-              <Ionicons name="notifications-outline" size={18} color={colors.purple} />
+              <Ionicons name="notifications-outline" size={17} color={colors.purple} />
               <Text style={[styles.alertChipText, { fontWeight: '900' }]}>Bus Alerts</Text>
             </Pressable>
           </View>
@@ -284,7 +286,7 @@ export default function HomeScreen() {
         />
 
           <View style={styles.floatButtons}>
-            <Pressable style={[styles.floatButton, styles.pinButton]} onPress={runJourneyPlanner}>
+            <Pressable style={[styles.floatButton, styles.pinButton]} onPress={() => router.push('/journey-destination')}>
               <Ionicons name="location-outline" size={20} color={colors.text} />
             </Pressable>
             <Pressable style={[styles.floatButton, styles.locateButton]} onPress={locate}>
@@ -368,9 +370,12 @@ const styles = StyleSheet.create({
   micButton: { width: 42, height: 42, borderRadius: 15, backgroundColor: '#2a374a', alignItems: 'center', justifyContent: 'center' },
   aiGoButton: { minWidth: 66, height: 42, borderRadius: 17, backgroundColor: '#1f4fbf', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
   aiGoText: { color: colors.text, fontSize: 14, fontWeight: '900' },
-  alertRow: { flexDirection: 'row', gap: 9, marginTop: 10 },
-  alertChip: { flex: 1, minHeight: 47, borderRadius: 15, backgroundColor: '#192235', borderWidth: 1, borderColor: '#263447', flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 16 },
-  alertChipText: { color: colors.text, fontSize: 14, flex: 1 },
+  alertRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  alertChip: { flex: 1, height: 40, borderRadius: 12, backgroundColor: '#192235', borderWidth: 1, borderColor: '#263447', flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 10 },
+  alertChipText: { color: colors.text, fontSize: 12, flex: 1 },
+  nearestStopButton: { flex: 1.35, height: 40, borderRadius: 12, backgroundColor: '#1f6be3', borderWidth: 1, borderColor: '#60a5fa', flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 10, shadowColor: '#1f6be3', shadowOpacity: 0.28, shadowRadius: 9, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
+  nearestStopText: { color: colors.text, fontSize: 11, fontWeight: '900', lineHeight: 13 },
+  nearestStopName: { color: '#dbeafe', fontSize: 9, fontWeight: '800', lineHeight: 11 },
   mapStage: { flex: 1, position: 'relative', backgroundColor: '#dbeafe' },
   floatButtons: { position: 'absolute', right: 17, bottom: 22, flexDirection: 'row', gap: 10 },
   floatButton: { width: 45, height: 45, borderRadius: 14, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.34, shadowRadius: 14, shadowOffset: { width: 0, height: 7 }, elevation: 10 },

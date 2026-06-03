@@ -33,8 +33,11 @@ export const routeList = [
   '195 Secunderabad - Bachupally',
   '198 Koti - Gachibowli',
   '204 MGBS - Shamirpet',
-  '218 Secunderabad - Patancheru',
+  '218 Patancheru - Koti',
+  '218H Hayathnagar - Patancheru',
+  '218C CBS - Patancheru',
   '219 Secunderabad - Patancheru',
+  '219/220 Secunderabad - Patancheru',
   '222 Secunderabad - Lingampally',
   '226 Koti - Lingampally',
   '250 Charminar - Kompally',
@@ -42,7 +45,9 @@ export const routeList = [
   '288 MGBS - Ramoji Film City',
   '300 Secunderabad - Hi-Tech City',
   '400 MGBS - Gachibowli',
-  '900 Airport Express'
+  '900 Airport Express',
+  '10KM Secunderabad - Miyapur X Roads',
+  '195W HCU Bus Depot - Bachupally X Road'
 ];
 
 const baseHydStops: Stop[] = [
@@ -87,7 +92,7 @@ const expandedStopNames = [
   'Aramghar', 'Shamshabad', 'Rajendranagar', 'Attapur', 'Mehdipatnam', 'Tolichowki', 'Shaikpet', 'Film Nagar', 'Jubilee Hills Check Post', 'Peddamma Temple',
   'Madhapur', 'HITEC City', 'Shilparamam', 'Kondapur', 'Botanical Garden', 'Gachibowli', 'Financial District', 'Nanakramguda', 'Wipro Circle', 'Narsingi',
   'Kokapet', 'Gandipet', 'Osman Sagar', 'CBIT', 'MGIT', 'Langar Houz', 'Golconda Fort', 'Banjara Hills Road No.1', 'Banjara Hills Road No.12', 'Masab Tank',
-  'NMDC', 'Erramanzil', 'Punjagutta', 'SR Nagar', 'ESI', 'Erragadda', 'Bharat Nagar', 'Moosapet', 'Kukatpally', 'KPHB',
+  'NMDC', 'Erramanzil', 'Punjagutta', 'SR Nagar Bus Stop', 'ESI', 'Erragadda', 'Bharat Nagar', 'Moosapet', 'Kukatpally', 'KPHB',
   'JNTU', 'Nizampet X Roads', 'Miyapur', 'Hafeezpet', 'Chandanagar', 'Lingampally', 'BHEL', 'Beeramguda', 'Patancheru', 'Isnapur',
   'RC Puram', 'Ashok Nagar (BHEL)', 'Allwyn Colony', 'Hydernagar', 'Vivekananda Nagar', 'Pragathi Nagar', 'Bachupally', 'Mallampet', 'Jeedimetla', 'Chintal',
   'Suraram', 'Suchitra', 'Kompally', 'Bowenpally', 'Old Bowenpally', 'Ferozguda', 'Balanagar', 'IDPL', 'Shapur Nagar', 'Gandimaisamma',
@@ -119,7 +124,7 @@ const knownStopCoordinates: Record<string, [number, number]> = {
   'Financial District': [17.4149, 78.3438], Nanakramguda: [17.4188, 78.3456], 'Wipro Circle': [17.4229, 78.3377], Narsingi: [17.3907, 78.3352],
   Kokapet: [17.3945, 78.3318], Gandipet: [17.3868, 78.3185], 'Osman Sagar': [17.3816, 78.3036], CBIT: [17.3916, 78.3198], MGIT: [17.3905, 78.3206],
   'Langar Houz': [17.3821, 78.4202], 'Golconda Fort': [17.3833, 78.4011], 'Masab Tank': [17.4017, 78.4522], NMDC: [17.3935, 78.4472],
-  Erramanzil: [17.4203, 78.4566], 'SR Nagar': [17.4432, 78.4458], ESI: [17.4484, 78.4337], Erragadda: [17.4546, 78.4239],
+  Erramanzil: [17.4203, 78.4566], 'SR Nagar Bus Stop': [17.44024, 78.44217], ESI: [17.4484, 78.4337], Erragadda: [17.4546, 78.4239],
   'Bharat Nagar': [17.46723208, 78.42877865], Moosapet: [17.47081311, 78.42667579], Kukatpally: [17.48371582, 78.41292411], KPHB: [17.49220149, 78.40192705],
   JNTU: [17.496261, 78.39441], 'Nizampet X Roads': [17.498276, 78.390314], Miyapur: [17.4966936, 78.36077124], Hafeezpet: [17.47951248, 78.36128353],
   Chandanagar: [17.49516128, 78.32297623], Lingampally: [17.49484919, 78.3168903], BHEL: [17.4955, 78.3028], Beeramguda: [17.51694503, 78.30003932], Patancheru: [17.52954198, 78.26410711],
@@ -138,7 +143,109 @@ const knownStopCoordinates: Record<string, [number, number]> = {
   'Cyber Towers': [17.450868, 78.380396], 'IIIT Hyderabad': [17.44550587, 78.35206512], Tellapur: [17.47036611, 78.28812092], Kollur: [17.44268113, 78.25294911],
   Keesara: [17.5281, 78.6656], 'ECIL X Roads': [17.4702, 78.5771], Sainikpuri: [17.4899, 78.5522], 'AS Rao Nagar': [17.4781, 78.5591],
   'Moula Ali': [17.4603, 78.5578], Nacharam: [17.4297, 78.5585], Mallapur: [17.4413, 78.5789], Cherlapally: [17.4717, 78.5942],
-  Peerzadiguda: [17.3974, 78.6006], Medipally: [17.4057, 78.6068]
+  Peerzadiguda: [17.3974, 78.6006], Medipally: [17.4057, 78.6068],
+  'Banjara Hills Road No.1': [17.417391, 78.457074], 'Banjara Hills Road No.12': [17.407262, 78.440587],
+  'Ashok Nagar (BHEL)': [17.491595, 78.292041], 'Allwyn Colony': [17.504362, 78.414985],
+  'Vivekananda Nagar': [17.493568, 78.412348], 'Pragathi Nagar': [17.520015, 78.396888], Mallampet: [17.550219, 78.335861],
+  Jeedimetla: [17.519687, 78.446888], Chintal: [17.502176, 78.440609], Suraram: [17.536095, 78.418639],
+  'Old Bowenpally': [17.477224, 78.484939], Ferozguda: [17.464618, 78.461633], IDPL: [17.480603, 78.45177],
+  'Shapur Nagar': [17.517337, 78.445096], Gandimaisamma: [17.576965, 78.421959], Hakimpet: [17.553, 78.543],
+  Thumkunta: [17.564354, 78.551714], 'Dairy Farm Road': [17.489, 78.516], Hasmathpet: [17.472678, 78.486718],
+  'Sikh Village': [17.460098, 78.487287], 'Prakash Nagar': [17.444889, 78.465875], Yousufguda: [17.43875, 78.427987],
+  'Krishna Nagar': [17.433052, 78.424675], Borabanda: [17.459069, 78.407866], 'Moosapet Y Junction': [17.472572, 78.42999],
+  'Fateh Nagar': [17.456201, 78.449924], Sanathnagar: [17.456965, 78.443478], 'Czech Colony': [17.456434, 78.438865],
+  Balkampet: [17.446923, 78.450451], 'Moti Nagar': [17.450807, 78.422242], Kamalanagar: [17.472804, 78.566675],
+  'Ashok Nagar X Roads': [17.4075, 78.493], Gunfoundry: [17.393644, 78.475665], 'Mozamjahi Market': [17.3845, 78.475052],
+  Putlibowli: [17.381389, 78.481944], 'Fever Hospital': [17.395432, 78.502482], 'Shivam Road': [17.400976, 78.513666],
+  'Arts College': [17.41914, 78.526358], Adikmet: [17.40955, 78.513094], 'Jamai Osmania': [17.411623, 78.518161],
+  Warasiguda: [17.418242, 78.511336], 'TV Tower': [17.3718, 78.5124], Barkas: [17.315518, 78.476499],
+  Shalibanda: [17.350395, 78.46527], Kalapathar: [17.345526, 78.460072], Kishanbagh: [17.360833, 78.442748],
+  Jiyaguda: [17.370756, 78.44202], Gudimalkapur: [17.38792, 78.437117], 'Humayun Nagar': [17.397111, 78.444766],
+  'Nanal Nagar': [17.394457, 78.42686], 'Vijayanagar Colony': [17.407391, 78.455966], Mallepally: [17.392073, 78.454613],
+  'AC Guards': [17.399877, 78.458051], 'Anand Nagar Colony': [17.371773, 78.504392], 'Annapurna Studios': [17.428511, 78.42369],
+  'Road No.36 Jubilee Hills': [17.438887, 78.399232], Gopanpally: [17.429719, 78.324569], 'Osman Nagar': [17.441813, 78.278223],
+  Velimela: [17.475556, 78.236389],
+  'Patancheru Bus Station': [17.529542, 78.264107], ICRISAT: [17.511, 78.276], 'Railway Station Gate': [17.516, 78.299],
+  'BHEL Pushpak': [17.4955, 78.3028], 'Sri Sai Nagar': [17.512, 78.300], 'Ashok Nagar': [17.491595, 78.292041],
+  'Jyothi Nagar': [17.5003, 78.309], Gangaram: [17.4962, 78.329], 'HUDA Colony': [17.492, 78.336],
+  'Deepthisree Nagar': [17.49, 78.344], Mythrinagar: [17.493, 78.355], 'Allwyn X Roads': [17.498, 78.371],
+  'Miyapur X Road': [17.496694, 78.360771], Nizampet: [17.514, 78.386], 'Kukatpally Y Junction': [17.478, 78.421],
+  'Kukatpally Depot': [17.476, 78.424], 'Prem Nagar': [17.466, 78.43], 'SR Nagar': [17.44024, 78.44217],
+  'Ameerpet (Maitrivanam)': [17.431553, 78.44765], NIMS: [17.424, 78.456], 'Chintal Basti': [17.411, 78.459],
+  Assembly: [17.397, 78.472], 'Nizam College': [17.402, 78.476], 'Bank Street': [17.386, 78.482],
+  'Koti Bus Terminal': [17.383098, 78.48282], 'Koti Bus Stop': [17.383098, 78.48282], 'Panama Godowns': [17.329, 78.584],
+  Chinthalkunta: [17.338, 78.557], 'Doctors Colony': [17.352, 78.543], 'Ashtalakshmi Temple / Kothapet': [17.366834, 78.541302],
+  Moosarambagh: [17.3722, 78.5156], Malakpet: [17.373, 78.503], 'Nalgonda X Roads': [17.372, 78.497],
+  'Nizampet Road': [17.498276, 78.390314], Madinaguda: [17.493, 78.338], Muthangi: [17.531, 78.243],
+  'Isnapur X Road': [17.5443, 78.2151], Rudraram: [17.554, 78.202], 'GITAM University Hyderabad': [17.553, 78.164],
+  'CBS (MGBS)': [17.3791, 78.4833], 'Gandhi Bhavan': [17.386, 78.47], 'Bowenpally X Road': [17.4692, 78.4796],
+  'Balanagar X Roads': [17.4756, 78.4484], NIPER: [17.482, 78.449], 'Prashanth Nagar': [17.488, 78.431],
+  'Sangeeth Nagar': [17.49, 78.421], 'Sumithra Nagar': [17.499, 78.413], 'KPHB Colony': [17.492201, 78.401927],
+  'Vasanth Nagar': [17.5, 78.389], 'Miyapur Metro Station': [17.496694, 78.360771], 'Miyapur Bus Stop': [17.496694, 78.360771],
+  'HCU Bus Depot': [17.462, 78.331], 'HCU Telephone Exchange': [17.46, 78.33], 'Hyderabad Central University': [17.456, 78.326],
+  'Masjid Banda / Alind Doyens Colony': [17.469, 78.352], 'HCU Gate No. 2': [17.456, 78.347],
+  'Gachibowli Stadium': [17.446, 78.345], 'DLF / IIIT': [17.447, 78.354], DLF: [17.447, 78.356], GPRA: [17.444, 78.357],
+  'Indira Nagar': [17.441, 78.359], 'Telecom Nagar': [17.438, 78.356], 'Lumbini Avenue': [17.435, 78.365],
+  'Cyber Gateway': [17.45, 78.381], 'Hitech City MMTS': [17.448, 78.383], 'Zyka Dhaba': [17.466, 78.386],
+  'Malaysian Township': [17.486, 78.394], 'KPHB Circle': [17.493, 78.399], 'KPHB Colony MIG': [17.491, 78.398],
+  'Rythu Bazar (KPHB)': [17.492, 78.403], 'JNTU Bus Stop': [17.496261, 78.39441], 'Honey Tots School': [17.514, 78.386],
+  'Nizampet Village': [17.526, 78.39], Kesenaris: [17.535, 78.383], 'Rajiv Gandhi Nagar': [17.539, 78.375],
+  'Rajiv Gandhi Nagar Phase-2': [17.542, 78.368], 'Bachupally X Road': [17.5441, 78.3541]
+};
+
+const curatedRouteStopNames: Record<string, string[]> = {
+  '218': [
+    'Patancheru Bus Station', 'Patancheru', 'ICRISAT', 'Railway Station Gate', 'RC Puram', 'BHEL Pushpak', 'Beeramguda',
+    'Sri Sai Nagar', 'Ashok Nagar', 'Jyothi Nagar', 'Lingampally', 'Chandanagar', 'Gangaram', 'HUDA Colony',
+    'Deepthisree Nagar', 'Mythrinagar', 'Allwyn X Roads', 'Miyapur', 'Miyapur X Road', 'Hydernagar', 'Nizampet',
+    'JNTU', 'KPHB', 'Vivekananda Nagar', 'Kukatpally', 'Kukatpally Y Junction', 'Kukatpally Depot', 'Moosapet',
+    'Bharat Nagar', 'Prem Nagar', 'Erragadda', 'ESI', 'SR Nagar', 'Ameerpet (Maitrivanam)', 'Panjagutta', 'NIMS',
+    'Erramanzil', 'Khairatabad', 'Chintal Basti', 'Lakdikapul', 'Assembly', 'Nizam College', 'Abids', 'Bank Street',
+    'Koti Bus Terminal', 'Koti Bus Stop'
+  ],
+  '218H': [
+    'Hayathnagar', 'Panama Godowns', 'Chinthalkunta', 'LB Nagar', 'Doctors Colony', 'Ashtalakshmi Temple / Kothapet',
+    'Chaitanyapuri', 'Dilsukhnagar', 'Moosarambagh', 'Malakpet', 'Nalgonda X Roads', 'Chaderghat', 'Koti', 'Abids',
+    'Nampally', 'Assembly', 'Lakdikapul', 'Khairatabad', 'Erramanzil', 'NIMS', 'Panjagutta', 'Ameerpet', 'SR Nagar',
+    'ESI', 'Erragadda', 'Moosapet', 'Kukatpally Depot', 'Kukatpally', 'KPHB', 'JNTU', 'Nizampet Road', 'Hydernagar',
+    'Miyapur X Road', 'Miyapur', 'Madinaguda', 'Deepthisree Nagar', 'HUDA Colony', 'Gangaram', 'Chandanagar',
+    'Lingampally', 'Jyothi Nagar', 'Ashok Nagar', 'Beeramguda', 'BHEL', 'RC Puram', 'ICRISAT', 'Patancheru Bus Station',
+    'Muthangi', 'Isnapur X Road', 'Rudraram', 'GITAM University Hyderabad'
+  ],
+  '218C': [
+    'CBS (MGBS)', 'Afzalgunj', 'Gandhi Bhavan', 'Nampally', 'Lakdikapul', 'Chintal Basti', 'Khairatabad',
+    'Erramanzil', 'NIMS', 'Panjagutta', 'Ameerpet', 'SR Nagar', 'ESI', 'Erragadda', 'Bharat Nagar', 'Moosapet',
+    'Kukatpally Depot', 'Kukatpally Y Junction', 'Kukatpally', 'KPHB', 'JNTU', 'Nizampet Road', 'Hydernagar',
+    'Miyapur X Road', 'Miyapur', 'Allwyn Colony', 'Madinaguda', 'Deepthisree Nagar', 'HUDA Colony', 'Gangaram',
+    'Chandanagar', 'Lingampally', 'Jyothi Nagar', 'Ashok Nagar', 'Sri Sai Nagar', 'Beeramguda', 'BHEL', 'RC Puram',
+    'Railway Station Gate', 'ICRISAT', 'Patancheru', 'Patancheru Bus Station'
+  ],
+  '10KM': [
+    'Secunderabad Bus Stand', 'JBS (Jubilee Bus Station)', 'Patny', 'Paradise', 'Rasoolpura', 'Begumpet',
+    'Greenlands', 'Ameerpet', 'SR Nagar', 'ESI', 'Erragadda', 'Moosapet', 'Kukatpally', 'KPHB', 'JNTU',
+    'Miyapur X Road'
+  ],
+  '219': [
+    'Secunderabad Station', 'Secunderabad Bus Stand', 'Clock Tower', 'Paradise', 'Tadbund', 'Bowenpally X Road',
+    'Ferozguda', 'Balanagar X Roads', 'NIPER', 'IDPL', 'Prashanth Nagar', 'Sangeeth Nagar', 'Kukatpally',
+    'Sumithra Nagar', 'Vivekananda Nagar', 'KPHB Colony', 'JNTU', 'Nizampet X Roads', 'Vasanth Nagar',
+    'Hydernagar', 'Miyapur Metro Station', 'Miyapur Bus Stop', 'Allwyn X Roads', 'Madinaguda', 'Deepthisree Nagar',
+    'HUDA Colony', 'Gangaram', 'Chandanagar', 'Lingampally', 'Jyothi Nagar', 'Ashok Nagar', 'Sri Sai Nagar',
+    'Beeramguda', 'BHEL', 'RC Puram', 'Railway Station Gate', 'ICRISAT', 'Patancheru', 'Patancheru Bus Station'
+  ],
+  '219/220': [
+    'Secunderabad Station', 'Secunderabad Bus Stand', 'Clock Tower', 'Paradise', 'Tadbund', 'Bowenpally X Road',
+    'Ferozguda', 'Balanagar', 'IDPL', 'Kukatpally', 'KPHB', 'JNTU', 'Nizampet X Roads', 'Hydernagar',
+    'Miyapur', 'Allwyn X Roads', 'Madinaguda', 'Chandanagar', 'Lingampally', 'BHEL', 'RC Puram', 'Patancheru'
+  ],
+  '195W': [
+    'HCU Bus Depot', 'HCU Telephone Exchange', 'Hyderabad Central University', 'Masjid Banda / Alind Doyens Colony',
+    'HCU Gate No. 2', 'Gachibowli Stadium', 'DLF / IIIT', 'DLF', 'GPRA', 'Indira Nagar', 'Gachibowli',
+    'Telecom Nagar', 'Lumbini Avenue', 'Mindspace', 'Cyber Gateway', 'Hitech City', 'Hitech City MMTS',
+    'Zyka Dhaba', 'Malaysian Township', 'KPHB Circle', 'KPHB Colony MIG', 'Rythu Bazar (KPHB)',
+    'JNTU Bus Stop', 'Nizampet X Road', 'Honey Tots School', 'Nizampet', 'Nizampet Village', 'Kesenaris',
+    'Rajiv Gandhi Nagar', 'Rajiv Gandhi Nagar Phase-2', 'Bachupally X Road'
+  ]
 };
 
 function fallbackCoordinate(index: number): [number, number] {
@@ -165,15 +272,44 @@ const expandedStops: Stop[] = expandedStopNames.map((name, index) => {
   return { name, latitude: coords[0], longitude: coords[1], major: roadMatched, roadMatched };
 });
 
+function routeDerivedCoordinate(routeStops: string[], index: number): [number, number] {
+  const before = routeStops
+    .slice(0, index)
+    .map((name, offset) => ({ coords: knownStopCoordinates[name], index: offset }))
+    .filter((item): item is { coords: [number, number]; index: number } => Boolean(item.coords))
+    .at(-1);
+  const after = routeStops
+    .slice(index + 1)
+    .map((name, offset) => ({ coords: knownStopCoordinates[name], index: index + offset + 1 }))
+    .find((item): item is { coords: [number, number]; index: number } => Boolean(item.coords));
+
+  if (before && after) {
+    const t = (index - before.index) / Math.max(1, after.index - before.index);
+    return [
+      before.coords[0] + (after.coords[0] - before.coords[0]) * t,
+      before.coords[1] + (after.coords[1] - before.coords[1]) * t
+    ];
+  }
+  return before?.coords || after?.coords || fallbackCoordinate(index);
+}
+
+const curatedRouteDerivedStops: Stop[] = Object.values(curatedRouteStopNames).flatMap((routeStops) =>
+  routeStops.map((name, index) => {
+    const coords = knownStopCoordinates[name] || routeDerivedCoordinate(routeStops, index);
+    return { name, latitude: coords[0], longitude: coords[1], major: Boolean(knownStopCoordinates[name]), roadMatched: Boolean(knownStopCoordinates[name]) };
+  })
+);
+
 const byName = new Map<string, Stop>();
-[...baseHydStops, ...expandedStops].forEach((stop) => byName.set(stop.name.toLowerCase(), stop));
+[...baseHydStops, ...expandedStops, ...curatedRouteDerivedStops].forEach((stop) => byName.set(stop.name.toLowerCase(), stop));
 export const hydStops: Stop[] = Array.from(byName.values());
 
 export const defaultRoutes: Route[] = routeList.map((name, index) => {
   const [code, ...rest] = name.split(' ');
   const title = rest.join(' ');
   const [origin, destination] = title.split(' - ');
-  const stops = hydStops.filter((stop) => name.toLowerCase().includes(stop.name.split(' ')[0].toLowerCase()));
+  const curatedStops = curatedRouteStopNames[code]?.map((stopName) => byName.get(stopName.toLowerCase())).filter((stop): stop is Stop => Boolean(stop)) || [];
+  const stops = curatedStops.length ? curatedStops : hydStops.filter((stop) => name.toLowerCase().includes(stop.name.split(' ')[0].toLowerCase()));
   return {
     id: code,
     route_code: code,

@@ -17,6 +17,7 @@ import { haversineKm } from '@/utils/geo';
 
 const DRIVER_CODE = '1234';
 const PROFILE_KEY = 'driverProfile';
+const CROWD_SCAN_INTERVAL_SECONDS = 10;
 
 type DriverStage = 'login' | 'vehicle' | 'route' | 'ride';
 
@@ -45,6 +46,8 @@ export default function DriverScreen() {
   const gpsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scanRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const scanningRef = useRef(false);
+  const passengerCountRef = useRef(passengerCount);
   const lastPointRef = useRef<[number, number] | null>(null);
   const distanceKmRef = useRef(0);
 
@@ -68,6 +71,10 @@ export default function DriverScreen() {
   }, []);
 
   useEffect(() => {
+    passengerCountRef.current = passengerCount;
+  }, [passengerCount]);
+
+  useEffect(() => {
     if (!tracking || stage !== 'ride') {
       if (scanRef.current) clearInterval(scanRef.current);
       if (tickRef.current) clearInterval(tickRef.current);
@@ -76,14 +83,14 @@ export default function DriverScreen() {
       return;
     }
 
-    setNextScan(12);
-    scanCrowd(true).catch(() => {});
+    setNextScan(CROWD_SCAN_INTERVAL_SECONDS);
+    setTimeout(() => scanCrowd(true).catch(() => {}), 700);
     scanRef.current = setInterval(() => {
-      setNextScan(12);
+      setNextScan(CROWD_SCAN_INTERVAL_SECONDS);
       scanCrowd(true).catch(() => {});
-    }, 12000);
+    }, CROWD_SCAN_INTERVAL_SECONDS * 1000);
     tickRef.current = setInterval(() => {
-      setNextScan((value) => (value <= 1 ? 12 : value - 1));
+      setNextScan((value) => (value <= 1 ? CROWD_SCAN_INTERVAL_SECONDS : value - 1));
     }, 1000);
 
     return () => {
@@ -150,7 +157,7 @@ export default function DriverScreen() {
         return;
       }
       const camera = await requestCameraPermission();
-      if (!camera.granted) Alert.alert('Camera permission needed', 'Camera is needed for the 12 second crowd scan.');
+      if (!camera.granted) Alert.alert('Camera permission needed', 'Camera is needed for the 10 second crowd scan.');
 
       setTracking(true);
       setStage('ride');
@@ -271,11 +278,19 @@ export default function DriverScreen() {
       const result = await requestCameraPermission();
       if (!result.granted) return;
     }
-    if (scanning) return;
+    if (scanningRef.current) return;
+    if (!cameraRef.current) {
+      setScanNote('Camera is getting ready. Next scan will try again.');
+      return;
+    }
+    scanningRef.current = true;
     setScanning(true);
     try {
-      const photo = await cameraRef.current?.takePictureAsync({ quality: 0.45, base64: true, skipProcessing: true });
-      if (!photo?.base64) return;
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.45, base64: true, skipProcessing: true });
+      if (!photo?.base64) {
+        setScanNote('Camera photo was not ready. Next scan will try again.');
+        return;
+      }
       const result = await analyzeCrowdImage(`data:image/jpeg;base64,${photo.base64}`);
       const confidence = result?.confidence || 0;
       const acceptedHeads = confidence > 50 ? result?.headsFound || result?.count || 0 : 0;
@@ -285,11 +300,12 @@ export default function DriverScreen() {
         setHeadsFound(acceptedHeads);
         await updateCrowd(acceptedHeads);
       } else {
-        setHeadsFound(passengerCount);
+        setHeadsFound(passengerCountRef.current);
       }
       if (!silent) Alert.alert('Crowd scan', confidence > 50 ? `${acceptedHeads} heads found. Confidence ${confidence}%.` : `Confidence ${confidence}%. Scan not accepted.`);
     } finally {
-      setTimeout(() => setScanning(false), 300);
+      scanningRef.current = false;
+      setScanning(false);
     }
   };
 
@@ -433,7 +449,7 @@ export default function DriverScreen() {
                 <Text style={styles.peopleFoundLabel}>No. of people found</Text>
                 <Text style={styles.peopleFoundValue}>{headsFound}</Text>
               </View>
-              <Text style={styles.help}>A local scan runs every 12 seconds. Head count is accepted only when confidence is above 50%.</Text>
+              <Text style={styles.help}>A local scan runs every 10 seconds. Head count is accepted only when confidence is above 50%.</Text>
               <Text style={styles.scanNote}>{scanNote} Next scan: {nextScan}s</Text>
               <Button label="Scan Now" icon="camera" tone="muted" disabled={scanning} onPress={() => scanCrowd(false)} />
             </View>

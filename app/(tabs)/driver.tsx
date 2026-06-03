@@ -18,6 +18,7 @@ import { haversineKm } from '@/utils/geo';
 const DRIVER_CODE = '1234';
 const PROFILE_KEY = 'driverProfile';
 const CROWD_SCAN_INTERVAL_SECONDS = 10;
+const GPS_UPLOAD_INTERVAL_MS = 30000;
 
 type DriverStage = 'login' | 'vehicle' | 'route' | 'ride';
 
@@ -239,7 +240,7 @@ export default function DriverScreen() {
       if (gpsIntervalRef.current) clearInterval(gpsIntervalRef.current);
       gpsIntervalRef.current = setInterval(() => {
         takeAndPublishGps().catch(() => {});
-      }, 10000);
+      }, GPS_UPLOAD_INTERVAL_MS);
     } finally {
       setStartingGps(false);
     }

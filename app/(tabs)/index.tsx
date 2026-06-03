@@ -3,7 +3,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import * as Speech from 'expo-speech';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
@@ -11,7 +11,7 @@ import { MapArea } from '@/components/MapArea';
 import { Screen } from '@/components/Screen';
 import { hydStops } from '@/data/routes';
 import { useLanguage } from '@/hooks/useLanguage';
-import { listenBuses, seedRoutesIfEmpty } from '@/services/firebase';
+import { listenNearbyBuses } from '@/services/firebase';
 import { cacheBuses, cacheRoute, cacheStops, getCachedBuses, getCachedRoute, getCachedSearch, saveSearch } from '@/services/offlineCache';
 import { planJourney, searchTransit, testLocalAi } from '@/services/localAi';
 import { colors, crowdMeta } from '@/theme';
@@ -37,19 +37,23 @@ export default function HomeScreen() {
   const [aiError, setAiError] = useState<string | null>(null);
   const [focusUserToken, setFocusUserToken] = useState(0);
   const [locating, setLocating] = useState(false);
+  const cacheTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     getCachedBuses().then((cached) => {
       if (cached.length) setBuses(cached);
     });
     cacheStops(hydStops).catch(() => {});
-    seedRoutesIfEmpty().catch(() => {});
     Notifications.requestPermissionsAsync().catch(() => {});
-    return listenBuses((next) => {
-      setBuses(next);
-      cacheBuses(next).catch(() => {});
-    });
   }, []);
+
+  useEffect(() => {
+    return listenNearbyBuses(userLocation, (next) => {
+      setBuses(next);
+      if (cacheTimerRef.current) clearTimeout(cacheTimerRef.current);
+      cacheTimerRef.current = setTimeout(() => cacheBuses(next).catch(() => {}), 1800);
+    });
+  }, [userLocation?.[0], userLocation?.[1]]);
 
   useFocusEffect(useCallback(() => {
     testLocalAi().then(setAiReady);

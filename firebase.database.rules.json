@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "buses": {
+      ".indexOn": ["updated_at", "bus_number", "zone_id"]
+    },
+    "publicLive": {
+      "$city": {
+        "$zoneId": {
+          ".indexOn": ["updated_at", "route_name", "bus_number"]
+        }
+      }
+    },
+    "routes": {
+      ".indexOn": ["route_code"]
+    }
+  }
+}

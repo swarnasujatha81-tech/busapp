@@ -6,7 +6,7 @@ import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, T
 import { Card } from '@/components/Card';
 import { Screen } from '@/components/Screen';
 import { hydStops } from '@/data/routes';
-import { listenBuses } from '@/services/firebase';
+import { listenNearbyBuses } from '@/services/firebase';
 import { colors, crowdMeta } from '@/theme';
 import type { Bus, CrowdLevel } from '@/types';
 import { etaMinutes, nearestStop } from '@/utils/geo';
@@ -45,7 +45,7 @@ export default function NearestStopScreen() {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locating, setLocating] = useState(true);
 
-  useEffect(() => listenBuses(setBuses), []);
+  useEffect(() => listenNearbyBuses(userLocation, setBuses), [userLocation?.[0], userLocation?.[1]]);
 
   const locate = async () => {
     setLocating(true);

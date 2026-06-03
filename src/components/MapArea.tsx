@@ -23,6 +23,7 @@ if (Platform.OS !== 'web') {
 }
 
 const MAX_VISIBLE_STOPS = 70;
+const MAX_VISIBLE_BUSES = 120;
 const STOP_VISIBILITY_DELTA = 0.32;
 type BusMarkerZoom = 'sm' | 'md' | 'lg';
 
@@ -56,6 +57,14 @@ function busMarkerZoom(latitudeDelta: number): BusMarkerZoom {
   return 'sm';
 }
 
+function distanceToRegion(
+  item: { latitude?: number; longitude?: number },
+  region: { latitude: number; longitude: number; latitudeDelta: number; longitudeDelta: number }
+) {
+  if (item.latitude == null || item.longitude == null) return Number.MAX_SAFE_INTEGER;
+  return Math.abs(item.latitude - region.latitude) + Math.abs(item.longitude - region.longitude);
+}
+
 export function MapArea({
   buses,
   stops,
@@ -81,9 +90,19 @@ export function MapArea({
     latitudeDelta: number;
     longitudeDelta: number;
   } | null>(null);
+  const regionUpdateRef = useRef(0);
 
   useEffect(() => {
-    const targets = visibleBuses.filter((bus) => bus.latitude != null && bus.longitude != null);
+    const regionForSort = visibleRegion || {
+      latitude: focusCoordinate?.[0] || 17.385,
+      longitude: focusCoordinate?.[1] || 78.4867,
+      latitudeDelta: 0.14,
+      longitudeDelta: 0.14
+    };
+    const targets = visibleBuses
+      .filter((bus) => bus.latitude != null && bus.longitude != null)
+      .sort((a, b) => distanceToRegion(a, regionForSort) - distanceToRegion(b, regionForSort))
+      .slice(0, MAX_VISIBLE_BUSES);
     if (!targets.length) {
       setDisplayPositions({});
       return;
@@ -98,7 +117,7 @@ export function MapArea({
     });
 
     let frame = 0;
-    const totalFrames = 20;
+    const totalFrames = 10;
     const timer = setInterval(() => {
       frame += 1;
       const t = Math.min(1, frame / totalFrames);
@@ -115,10 +134,10 @@ export function MapArea({
         return next;
       });
       if (frame >= totalFrames) clearInterval(timer);
-    }, 500);
+    }, 250);
 
     return () => clearInterval(timer);
-  }, [visibleBuses.map((bus) => `${bus.id}:${bus.latitude}:${bus.longitude}:${bus.updated_at}`).join('|')]);
+  }, [visibleBuses.map((bus) => `${bus.id}:${bus.latitude}:${bus.longitude}:${bus.updated_at}`).join('|'), visibleRegion?.latitude, visibleRegion?.longitude]);
 
   useEffect(() => {
     if (!userLocation || !mapRef.current) return;
@@ -158,6 +177,10 @@ export function MapArea({
     };
 
     const currentRegion = visibleRegion || region;
+    const mapBuses = visibleBuses
+      .filter((bus) => bus.latitude != null && bus.longitude != null)
+      .sort((a, b) => distanceToRegion(a, currentRegion) - distanceToRegion(b, currentRegion))
+      .slice(0, MAX_VISIBLE_BUSES);
     const markerZoom = busMarkerZoom(currentRegion.latitudeDelta);
     const shouldShowStops =
       currentRegion.latitudeDelta <= STOP_VISIBILITY_DELTA &&
@@ -189,7 +212,12 @@ export function MapArea({
         showsUserLocation={false}
         mapType={mapTheme}
         moveOnMarkerPress={false}
-        onRegionChangeComplete={setVisibleRegion}
+        onRegionChangeComplete={(nextRegion: typeof currentRegion) => {
+          const now = Date.now();
+          if (now - regionUpdateRef.current < 350) return;
+          regionUpdateRef.current = now;
+          setVisibleRegion(nextRegion);
+        }}
       >
         {visibleStops.map((stop) => (
           <Marker key={stop.name} coordinate={stop} title={stop.name} anchor={{ x: 0.5, y: 0.5 }} tracksViewChanges={false} zIndex={5}>
@@ -205,7 +233,7 @@ export function MapArea({
             </View>
           </Marker>
         ) : null}
-        {visibleBuses.filter((b) => b.latitude != null && b.longitude != null).map((bus) => {
+        {mapBuses.map((bus) => {
           const displayPosition = displayPositions[bus.id] || { latitude: bus.latitude!, longitude: bus.longitude! };
           return (
           <Marker

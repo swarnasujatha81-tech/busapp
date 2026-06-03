@@ -29,6 +29,7 @@ export type Bus = {
   is_active: boolean;
   live_session_id?: string;
   live_source?: 'driver_app';
+  zone_id?: string;
   speed: number;
   next_stop?: string;
   heading: number;

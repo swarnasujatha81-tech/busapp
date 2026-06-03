@@ -8,7 +8,7 @@ import { seedRoutesIfEmpty } from '@/services/firebase';
 
 export default function RootLayout() {
   useEffect(() => {
-    seedRoutesIfEmpty().catch(() => {});
+    if (__DEV__) seedRoutesIfEmpty().catch(() => {});
   }, []);
 
   return (

@@ -7,7 +7,7 @@ import { Card } from '@/components/Card';
 import { Screen } from '@/components/Screen';
 import { hydStops } from '@/data/routes';
 import { useLanguage } from '@/hooks/useLanguage';
-import { listenBuses } from '@/services/firebase';
+import { listenNearbyBuses } from '@/services/firebase';
 import { colors } from '@/theme';
 import type { Bus, RegularAlert } from '@/types';
 
@@ -21,7 +21,7 @@ export default function AlertsScreen() {
   const [stopName, setStopName] = useState('');
   const [time, setTime] = useState('08:00');
 
-  useEffect(() => listenBuses(setBuses), []);
+  useEffect(() => listenNearbyBuses(null, setBuses), []);
   useEffect(() => {
     AsyncStorage.getItem(ALERTS_KEY).then((raw) => setAlerts(raw ? JSON.parse(raw) : []));
     Notifications.requestPermissionsAsync().catch(() => {});

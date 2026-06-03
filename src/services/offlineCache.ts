@@ -1,6 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Bus, Stop } from '@/types';
 
+const BUS_CACHE_LIMIT = 300;
+const ROUTE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const SEARCH_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
 const keys = {
   buses: 'offline:buses',
   stops: 'offline:stops',
@@ -18,7 +22,11 @@ async function readJson<T>(key: string, fallback: T): Promise<T> {
 }
 
 export async function cacheBuses(buses: Bus[]) {
-  await AsyncStorage.setItem(keys.buses, JSON.stringify(buses.slice(0, 80)));
+  const compact = buses
+    .filter((bus) => bus.is_active || bus.updated_at)
+    .sort((a, b) => Number(b.updated_at || 0) - Number(a.updated_at || 0))
+    .slice(0, BUS_CACHE_LIMIT);
+  await AsyncStorage.setItem(keys.buses, JSON.stringify(compact));
 }
 
 export async function getCachedBuses() {
@@ -40,6 +48,7 @@ export async function cacheRoute(busId: string, coords: Array<{ latitude: number
 export async function getCachedRoute(busId: string) {
   const cached = await readJson<{ coords: Array<{ latitude: number; longitude: number }>; savedAt: number } | null>(keys.route(busId), null);
   if (!cached) return [];
+  if (Date.now() - cached.savedAt > ROUTE_CACHE_TTL_MS) return [];
   return cached.coords;
 }
 
@@ -49,5 +58,6 @@ export async function saveSearch(query: string, result: unknown) {
 
 export async function getCachedSearch<T>(query: string) {
   const cached = await readJson<{ result: T; savedAt: number } | null>(keys.search(query), null);
+  if (!cached || Date.now() - cached.savedAt > SEARCH_CACHE_TTL_MS) return null;
   return cached?.result || null;
 }

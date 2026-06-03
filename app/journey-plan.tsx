@@ -6,7 +6,7 @@ import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, T
 import { Card } from '@/components/Card';
 import { Screen } from '@/components/Screen';
 import { defaultRoutes, hydStops } from '@/data/routes';
-import { listenBuses } from '@/services/firebase';
+import { listenNearbyBuses } from '@/services/firebase';
 import { colors, crowdMeta } from '@/theme';
 import type { Bus, Route, Stop } from '@/types';
 import { etaMinutes, haversineKm, nearestStop } from '@/utils/geo';
@@ -100,7 +100,7 @@ export default function JourneyPlanScreen() {
     return lat != null && lng != null ? [lat, lng] : null;
   }, [params.destLat, params.destLng]);
 
-  useEffect(() => listenBuses(setBuses), []);
+  useEffect(() => listenNearbyBuses(userLocation, setBuses), [userLocation?.[0], userLocation?.[1]]);
 
   useEffect(() => {
     if (userLocation) return;

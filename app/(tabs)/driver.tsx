@@ -17,7 +17,7 @@ import { haversineKm } from '@/utils/geo';
 
 const DRIVER_CODE = '1234';
 const PROFILE_KEY = 'driverProfile';
-const CROWD_SCAN_INTERVAL_SECONDS = 10;
+const CROWD_SCAN_INTERVAL_SECONDS = 25;
 const GPS_UPLOAD_INTERVAL_MS = 30000;
 
 type DriverStage = 'login' | 'vehicle' | 'route' | 'ride';
@@ -158,7 +158,7 @@ export default function DriverScreen() {
         return;
       }
       const camera = await requestCameraPermission();
-      if (!camera.granted) Alert.alert('Camera permission needed', 'Camera is needed for the 10 second crowd scan.');
+      if (!camera.granted) Alert.alert('Camera permission needed', 'Camera is needed for the 25 second crowd scan.');
 
       setTracking(true);
       setStage('ride');
@@ -287,7 +287,7 @@ export default function DriverScreen() {
     scanningRef.current = true;
     setScanning(true);
     try {
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.45, base64: true, skipProcessing: true });
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.45, base64: true, skipProcessing: true, shutterSound: false });
       if (!photo?.base64) {
         setScanNote('Camera photo was not ready. Next scan will try again.');
         return;
@@ -450,7 +450,7 @@ export default function DriverScreen() {
                 <Text style={styles.peopleFoundLabel}>No. of people found</Text>
                 <Text style={styles.peopleFoundValue}>{headsFound}</Text>
               </View>
-              <Text style={styles.help}>A local scan runs every 10 seconds. Head count is accepted only when confidence is above 50%.</Text>
+              <Text style={styles.help}>A local scan runs every 25 seconds. Head count is accepted only when confidence is above 50%.</Text>
               <Text style={styles.scanNote}>{scanNote} Next scan: {nextScan}s</Text>
               <Button label="Scan Now" icon="camera" tone="muted" disabled={scanning} onPress={() => scanCrowd(false)} />
             </View>

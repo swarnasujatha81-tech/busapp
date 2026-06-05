@@ -85,7 +85,12 @@ export async function updateBus(id: string, patch: Partial<Bus>) {
     updates[`buses/${id}/${key}`] = value ?? null;
   });
 
-  const shouldMirrorPublic = patch.latitude != null || patch.longitude != null || patch.is_active === false;
+  const shouldMirrorPublic =
+    patch.latitude != null ||
+    patch.longitude != null ||
+    patch.passenger_count != null ||
+    patch.crowd_level != null ||
+    patch.is_active === false;
   if (!shouldMirrorPublic) {
     await update(ref(db), updates);
     return;

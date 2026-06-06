@@ -12,7 +12,7 @@ import { Screen } from '@/components/Screen';
 import { hydStops } from '@/data/routes';
 import { useLanguage } from '@/hooks/useLanguage';
 import { listenNearbyBuses } from '@/services/firebase';
-import { cacheBuses, cacheRoute, cacheStops, getCachedBuses, getCachedRoute, getCachedSearch, saveSearch } from '@/services/offlineCache';
+import { cacheBuses, cacheRoute, cacheStops, getCachedRoute, getCachedSearch, saveSearch } from '@/services/offlineCache';
 import { planJourney, searchTransit, testLocalAi } from '@/services/localAi';
 import { colors, crowdMeta } from '@/theme';
 import type { Bus, CrowdLevel, Stop } from '@/types';
@@ -40,9 +40,6 @@ export default function HomeScreen() {
   const cacheTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    getCachedBuses().then((cached) => {
-      if (cached.length) setBuses(cached);
-    });
     cacheStops(hydStops).catch(() => {});
     Notifications.requestPermissionsAsync().catch(() => {});
   }, []);
@@ -163,6 +160,10 @@ export default function HomeScreen() {
     setTimeout(() => setRefreshing(false), 700);
   };
 
+  const openDestinationSearch = () => {
+    router.push('/destination-search');
+  };
+
   const runSearch = async () => {
     if (!query.trim()) return;
     setLoadingAi(true);
@@ -217,6 +218,25 @@ export default function HomeScreen() {
     Speech.speak(text, { language });
   };
 
+  const openBusDetails = (bus: Bus) => {
+    setSelectedBus(bus);
+    router.push({
+      pathname: '/bus-details',
+      params: {
+        id: bus.id,
+        busNumber: bus.bus_number,
+        routeName: bus.route_name,
+        crowdLevel: bus.crowd_level,
+        passengerCount: String(bus.passenger_count),
+        maxCapacity: String(bus.max_capacity),
+        speed: String(bus.speed || 0),
+        latitude: bus.latitude != null ? String(bus.latitude) : '',
+        longitude: bus.longitude != null ? String(bus.longitude) : '',
+        updatedAt: bus.updated_at ? String(bus.updated_at) : ''
+      }
+    });
+  };
+
   const showRoute = (bus: Bus) => {
     setSelectedBus(bus);
     Speech.speak(`Showing route for ${bus.bus_number}`, { language });
@@ -249,12 +269,13 @@ export default function HomeScreen() {
               placeholderTextColor="#6b7280"
               style={styles.heroInput}
               returnKeyType="search"
-              onSubmitEditing={runSearch}
+              onFocus={openDestinationSearch}
+              onSubmitEditing={openDestinationSearch}
             />
             <Pressable style={styles.micButton} onPress={speakCurrent}>
               <Ionicons name="mic-outline" size={20} color={colors.text} />
             </Pressable>
-            <Pressable style={styles.aiGoButton} onPress={runSearch}>
+            <Pressable style={styles.aiGoButton} onPress={openDestinationSearch}>
               {loadingAi ? <ActivityIndicator color={colors.text} /> : <Text style={styles.aiGoText}>AI Go</Text>}
             </Pressable>
           </View>
@@ -285,7 +306,7 @@ export default function HomeScreen() {
           crowdFilter={crowdFilter}
           mapTheme={mapTheme}
           focusUserToken={focusUserToken}
-          onSelectBus={setSelectedBus}
+          onSelectBus={openBusDetails}
           onLongPressBus={showRoute}
         />
 

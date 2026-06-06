@@ -21,22 +21,44 @@ const busesRef = ref(db, 'buses');
 const routesRef = ref(db, 'routes');
 const publicLiveRoot = 'publicLive/hyderabad';
 const DEFAULT_LIVE_BUS_LIMIT = 500;
+const LIVE_BUS_STALE_AFTER_MS = 8 * 60 * 1000;
 
 function mapRecord<T extends { id: string }>(value: unknown): T[] {
   if (!value || typeof value !== 'object') return [];
   return Object.entries(value as Record<string, Omit<T, 'id'>>).map(([id, data]) => ({ id, ...data }) as T);
 }
 
+function isRealLiveBus(bus: Bus) {
+  const now = Date.now();
+  return (
+    bus.is_active &&
+    bus.live_source === 'driver_app' &&
+    Boolean(bus.live_session_id) &&
+    /^\d{4}$/.test(bus.bus_number) &&
+    bus.latitude != null &&
+    bus.longitude != null &&
+    bus.latitude >= 16.9 &&
+    bus.latitude <= 17.8 &&
+    bus.longitude >= 78.0 &&
+    bus.longitude <= 79.0 &&
+    (!bus.updated_at || now - bus.updated_at <= LIVE_BUS_STALE_AFTER_MS)
+  );
+}
+
 export function listenBuses(callback: (buses: Bus[]) => void) {
   return onValue(busesRef, (snapshot) => {
-    const buses = mapRecord<Bus>(snapshot.val()).sort((a, b) => Number(b.updated_at || 0) - Number(a.updated_at || 0));
+    const buses = mapRecord<Bus>(snapshot.val())
+      .filter(isRealLiveBus)
+      .sort((a, b) => Number(b.updated_at || 0) - Number(a.updated_at || 0));
     callback(buses);
   });
 }
 
 export function listenRecentBuses(callback: (buses: Bus[]) => void, limit = DEFAULT_LIVE_BUS_LIMIT) {
   return onValue(query(busesRef, orderByChild('updated_at'), limitToLast(limit)), (snapshot) => {
-    const buses = mapRecord<Bus>(snapshot.val()).sort((a, b) => Number(b.updated_at || 0) - Number(a.updated_at || 0));
+    const buses = mapRecord<Bus>(snapshot.val())
+      .filter(isRealLiveBus)
+      .sort((a, b) => Number(b.updated_at || 0) - Number(a.updated_at || 0));
     callback(buses);
   });
 }
@@ -49,6 +71,7 @@ export function listenNearbyBuses(location: [number, number] | null, callback: (
       byZone.set(zoneId, mapRecord<Bus>(snapshot.val()));
       const buses = Array.from(byZone.values())
         .flat()
+        .filter(isRealLiveBus)
         .sort((a, b) => Number(b.updated_at || 0) - Number(a.updated_at || 0));
       callback(buses);
     })

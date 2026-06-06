@@ -4,7 +4,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { Screen } from '@/components/Screen';
@@ -19,6 +19,7 @@ const DRIVER_CODE = '1234';
 const PROFILE_KEY = 'driverProfile';
 const CROWD_SCAN_INTERVAL_SECONDS = 25;
 const GPS_UPLOAD_INTERVAL_MS = 30000;
+const EXTERNAL_CAMERA_PATTERN = /(external|continuity|bluetooth|bt|usb|wireless|remote)/i;
 
 type DriverStage = 'login' | 'vehicle' | 'route' | 'ride';
 
@@ -41,6 +42,10 @@ export default function DriverScreen() {
   const [scanning, setScanning] = useState(false);
   const [nextScan, setNextScan] = useState(12);
   const [rideStartTime, setRideStartTime] = useState<number | null>(null);
+  const [availableCameraLenses, setAvailableCameraLenses] = useState<string[]>([]);
+  const [externalCameraLens, setExternalCameraLens] = useState<string | null>(null);
+  const [preferExternalCamera, setPreferExternalCamera] = useState(false);
+  const [cameraSourceNote, setCameraSourceNote] = useState('Phone camera selected.');
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const cameraRef = useRef<ComponentRef<typeof CameraView> | null>(null);
   const watcherRef = useRef<Location.LocationSubscription | null>(null);
@@ -274,6 +279,44 @@ export default function DriverScreen() {
     }
   };
 
+  const chooseExternalLens = (lenses: string[]) => lenses.find((lens) => EXTERNAL_CAMERA_PATTERN.test(lens)) || null;
+
+  const refreshExternalCamera = async (showAlert = false) => {
+    if (!cameraRef.current) {
+      setCameraSourceNote('Camera preview is starting. Try checking again in a moment.');
+      return;
+    }
+
+    try {
+      const lenses = await cameraRef.current.getAvailableLensesAsync();
+      const externalLens = chooseExternalLens(lenses);
+      setAvailableCameraLenses(lenses);
+      setExternalCameraLens(externalLens);
+      setPreferExternalCamera(Boolean(externalLens));
+
+      if (externalLens) {
+        const message = `External camera detected: ${externalLens}. Scanner photos will use it.`;
+        setCameraSourceNote(message);
+        if (showAlert) Alert.alert('Bluetooth camera connected', message);
+        return;
+      }
+
+      const message =
+        Platform.OS === 'android'
+          ? 'No selectable external camera was reported. If Android exposes the paired camera as the active system camera, scans will use that preview; otherwise phone camera is used.'
+          : 'No external camera lens detected. Pair/connect a supported camera, then tap Check Camera.';
+      setCameraSourceNote(message);
+      if (showAlert) Alert.alert('External camera not detected', message);
+    } catch {
+      const message = 'This device does not expose selectable external camera lenses to the app. Scanner will use the visible camera preview.';
+      setAvailableCameraLenses([]);
+      setExternalCameraLens(null);
+      setPreferExternalCamera(false);
+      setCameraSourceNote(message);
+      if (showAlert) Alert.alert('Camera source', message);
+    }
+  };
+
   const scanCrowd = async (silent = false) => {
     if (!cameraPermission?.granted) {
       const result = await requestCameraPermission();
@@ -287,6 +330,7 @@ export default function DriverScreen() {
     scanningRef.current = true;
     setScanning(true);
     try {
+      if (preferExternalCamera && !externalCameraLens) await refreshExternalCamera(false);
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.45, base64: true, skipProcessing: true, shutterSound: false });
       if (!photo?.base64) {
         setScanNote('Camera photo was not ready. Next scan will try again.');
@@ -295,8 +339,9 @@ export default function DriverScreen() {
       const result = await analyzeCrowdImage(`data:image/jpeg;base64,${photo.base64}`);
       const confidence = result?.confidence || 0;
       const acceptedHeads = confidence > 50 ? result?.headsFound || result?.count || 0 : 0;
+      const source = externalCameraLens ? 'external Bluetooth camera' : 'camera preview';
       setScanConfidence(confidence);
-      setScanNote(result?.note || 'Scan complete.');
+      setScanNote(`${result?.note || 'Scan complete.'} Source: ${source}.`);
       if (confidence > 50) {
         setHeadsFound(acceptedHeads);
         await updateCrowd(acceptedHeads);
@@ -328,6 +373,22 @@ export default function DriverScreen() {
     setScanConfidence(100);
     setScanNote('Manual count confirmed by driver.');
     await updateCrowd(nextCount);
+  };
+
+  const openBluetoothCameraSetup = async () => {
+    Alert.alert(
+      'Bluetooth camera setup',
+      'Pair the camera in phone Bluetooth settings first. The scanner can use it only if Android exposes it as a camera source; many Bluetooth cameras pair for remote shutter only and do not stream video.'
+    );
+    try {
+      if (Platform.OS === 'android') {
+        await Linking.sendIntent('android.settings.BLUETOOTH_SETTINGS');
+      } else {
+        await Linking.openSettings();
+      }
+    } catch {
+      await Linking.openSettings();
+    }
   };
 
   if (stage === 'login') {
@@ -441,7 +502,23 @@ export default function DriverScreen() {
         <Card>
           <View style={styles.cameraRow}>
             <View style={styles.smallCamera}>
-              <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
+              <CameraView
+                ref={cameraRef}
+                style={StyleSheet.absoluteFill}
+                facing="back"
+                selectedLens={externalCameraLens || undefined}
+                onCameraReady={() => refreshExternalCamera(false)}
+                onAvailableLensesChanged={(event) => {
+                  const lenses = event.lenses || [];
+                  const externalLens = chooseExternalLens(lenses);
+                  setAvailableCameraLenses(lenses);
+                  setExternalCameraLens(externalLens);
+                  if (externalLens) {
+                    setPreferExternalCamera(true);
+                    setCameraSourceNote(`External camera detected: ${externalLens}. Scanner photos will use it.`);
+                  }
+                }}
+              />
               {scanning ? <View style={styles.scanOverlay}><ActivityIndicator color={colors.text} /></View> : null}
             </View>
             <View style={styles.cameraInfo}>
@@ -451,8 +528,13 @@ export default function DriverScreen() {
                 <Text style={styles.peopleFoundValue}>{headsFound}</Text>
               </View>
               <Text style={styles.help}>A local scan runs every 25 seconds. Head count is accepted only when confidence is above 50%.</Text>
+              <Text style={styles.help}>For an external camera, pair it by Bluetooth and make sure the phone exposes it as a camera source.</Text>
+              <Text style={styles.cameraSource}>{cameraSourceNote}</Text>
+              {availableCameraLenses.length ? <Text style={styles.cameraSource}>Detected lenses: {availableCameraLenses.join(', ')}</Text> : null}
               <Text style={styles.scanNote}>{scanNote} Next scan: {nextScan}s</Text>
               <Button label="Scan Now" icon="camera" tone="muted" disabled={scanning} onPress={() => scanCrowd(false)} />
+              <Button label="Bluetooth Camera" icon="bluetooth" tone="muted" onPress={openBluetoothCameraSetup} />
+              <Button label="Check Camera" icon="refresh" tone="muted" onPress={() => refreshExternalCamera(true)} />
             </View>
           </View>
         </Card>
@@ -524,6 +606,7 @@ const styles = StyleSheet.create({
   peopleFoundLabel: { color: colors.muted, fontSize: 11, fontWeight: '800' },
   peopleFoundValue: { color: colors.text, fontSize: 30, fontWeight: '900', marginTop: 2 },
   help: { color: colors.muted, fontSize: 12, lineHeight: 17 },
+  cameraSource: { color: colors.green, fontSize: 12, lineHeight: 17, fontWeight: '800' },
   scanNote: { color: colors.cyan, fontSize: 12, lineHeight: 17, fontWeight: '800' },
   stepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 20 },
   stepper: { width: 44, height: 44, borderRadius: 8, backgroundColor: colors.panel2, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
